@@ -1,9 +1,6 @@
 import { supabase } from '../server/db.js';
-import { createRequire } from 'module';
 import path from 'path';
-
-const require = createRequire(import.meta.url);
-const { ShamClient } = require('@jhad-dev/shamy');
+import { ShamClient } from '@jhad-dev/shamy';
 
 // Global map to hold QR payloads while link is pending
 export const pendingLinks = new Map<string, string>();
