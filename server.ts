@@ -2,15 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import authRoutes from './src/server/routes/auth.js';
 import dashboardRoutes from './src/server/routes/dashboard.js';
 import externalApiRoutes from './src/server/routes/external_api.js';
 import adminRoutes from './src/server/routes/admin.js';
 import { setupCronJobs } from './src/server/cron.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   // Start background jobs
@@ -42,7 +38,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, 'dist');
+const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
