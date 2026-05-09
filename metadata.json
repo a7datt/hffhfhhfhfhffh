@@ -1,0 +1,6 @@
+{
+  "name": "Remix: SYB API",
+  "description": "منصة لإدارة وربط محافظ شام كاش عبر API مع توفير سجلات وتحويلات خارجية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
