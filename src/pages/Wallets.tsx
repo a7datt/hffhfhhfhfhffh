@@ -96,7 +96,14 @@ export default function Wallets() {
         try {
           const res = await fetchApi(`/api/dashboard/wallets/link/status/${pendingWalletId}`);
           const data = await res.json();
-          if (data.linked) {
+          if (data.failed) {
+             clearInterval(interval);
+             setQrPayload(null);
+             setPendingWalletId(null);
+             setLinkError(data.error);
+             setStep(1); // Go back to start
+             toast.error(data.error || 'حدث خطأ أثناء الاتصال بتطبيق شام كاش');
+          } else if (data.linked) {
              clearInterval(interval);
              setShowAddModal(false);
              setStep(1);

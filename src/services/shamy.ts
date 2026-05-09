@@ -128,10 +128,21 @@ export class ShamCashService {
            }
         });
 
-        client.on('error', (err: any) => {
+        client.on('error', async (err: any) => {
            console.error('ShamClient error:', err);
            if (!pendingLinks.has(walletId)) {
              reject(err);
+           }
+           
+           try {
+             const message = err.message || JSON.stringify(err);
+             if (tableName === 'admin_wallets') {
+                await supabase.from('admin_wallets').update({ status: 'failed', session_data: { error: message } as any }).eq('id', walletId);
+             } else {
+                await supabase.from('wallets').update({ status: 'failed', session_data: { error: message } as any }).eq('id', walletId);
+             }
+           } catch(e) {
+             console.error("Failed to save error status to db", e);
            }
         });
 

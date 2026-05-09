@@ -117,7 +117,14 @@ export default function Admin() {
                 headers: { 'Authorization': `Bearer ${token}` }
              });
              const data = await res.json();
-             if (data.linked) {
+             if (data.failed) {
+                toast.error(data.error || 'فشل في ربط المحفظة');
+                setLinkingWallet(false);
+                setQrPayload(null);
+                setPendingWalletId(null);
+                setStep(1);
+                clearInterval(int);
+             } else if (data.linked) {
                 toast.success('تم ربط المحفظة بنجاح!');
                 setLinkingWallet(false);
                 setQrPayload(null);

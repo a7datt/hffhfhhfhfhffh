@@ -7,6 +7,9 @@ import dashboardRoutes from './src/server/routes/dashboard.js';
 import externalApiRoutes from './src/server/routes/external_api.js';
 import adminRoutes from './src/server/routes/admin.js';
 import { setupCronJobs } from './src/server/cron.js';
+import dns from 'dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 async function startServer() {
   // Start background jobs

@@ -179,12 +179,16 @@ router.get('/wallets/link/status/:walletId', async (req, res) => {
 
     const { data: wallet, error } = await supabase
       .from('wallets')
-      .select('status')
+      .select('status, session_data')
       .eq('id', walletId)
       .eq('user_id', userId)
       .single();
 
     if (error) throw error;
+    
+    if (wallet.status === 'failed') {
+       return res.json({ linked: false, failed: true, error: (wallet.session_data as any)?.error || 'حدث خطأ أثناء الربط' });
+    }
 
     res.json({ linked: wallet.status === 'active' });
   } catch (error: any) {

@@ -214,13 +214,15 @@ router.get('/deposit-wallet/status/:walletId', async (req, res) => {
     
     const { data: wallet, error } = await supabase
       .from('admin_wallets')
-      .select('status, wallet_address')
+      .select('status, wallet_address, session_data')
       .eq('id', walletId)
       .maybeSingle();
 
     if (error) console.error("Error fetching admin_wallets in status:", error);
       
-    if (wallet && wallet.status === 'active') {
+    if (wallet && wallet.status === 'failed') {
+       res.json({ linked: false, failed: true, error: (wallet.session_data as any)?.error });
+    } else if (wallet && wallet.status === 'active') {
        res.json({ linked: true, address: wallet.wallet_address });
     } else {
        res.json({ linked: false });
