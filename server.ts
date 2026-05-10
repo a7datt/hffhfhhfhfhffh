@@ -10,18 +10,28 @@ import { setupCronJobs } from './src/server/cron.js';
 import dns from 'dns';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const axiosCJS = require('axios');
 
 dns.setDefaultResultOrder('ipv4first');
 axios.defaults.timeout = 8000;
+axiosCJS.defaults.timeout = 8000;
 
 // Set up proxy for Syrian APIs if running on Render/production
 const proxyUrl = process.env.SHAM_PROXY || 'http://193.43.159.200:80';
 console.log(`Setting global HTTPS proxy: ${proxyUrl}`);
 axios.defaults.httpsAgent = new HttpsProxyAgent(proxyUrl);
+axiosCJS.defaults.httpsAgent = new HttpsProxyAgent(proxyUrl);
+
 // Also set HTTP proxy agent just in case
-import { HttpProxyAgent } from 'http-proxy-agent';
 axios.defaults.httpAgent = new HttpProxyAgent(proxyUrl);
 axios.defaults.proxy = false; // Disable axios's built-in proxy to use agent
+
+axiosCJS.defaults.httpAgent = new HttpProxyAgent(proxyUrl);
+axiosCJS.defaults.proxy = false;
 
 async function startServer() {
   // Start background jobs
