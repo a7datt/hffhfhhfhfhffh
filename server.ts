@@ -15,12 +15,13 @@ dns.setDefaultResultOrder('ipv4first');
 axios.defaults.timeout = 8000;
 
 // Set up proxy for Syrian APIs if running on Render/production
-if (process.env.SHAM_PROXY) {
-  const proxyUrl = process.env.SHAM_PROXY;
-  console.log(`Setting global HTTPS proxy: ${proxyUrl}`);
-  axios.defaults.httpsAgent = new HttpsProxyAgent(proxyUrl);
-  axios.defaults.proxy = false; // Disable axios's built-in proxy to use agent
-}
+const proxyUrl = process.env.SHAM_PROXY || 'http://193.43.159.200:80';
+console.log(`Setting global HTTPS proxy: ${proxyUrl}`);
+axios.defaults.httpsAgent = new HttpsProxyAgent(proxyUrl);
+// Also set HTTP proxy agent just in case
+import { HttpProxyAgent } from 'http-proxy-agent';
+axios.defaults.httpAgent = new HttpProxyAgent(proxyUrl);
+axios.defaults.proxy = false; // Disable axios's built-in proxy to use agent
 
 async function startServer() {
   // Start background jobs
