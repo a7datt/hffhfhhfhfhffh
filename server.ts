@@ -9,9 +9,18 @@ import adminRoutes from './src/server/routes/admin.js';
 import { setupCronJobs } from './src/server/cron.js';
 import dns from 'dns';
 import axios from 'axios';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 dns.setDefaultResultOrder('ipv4first');
 axios.defaults.timeout = 8000;
+
+// Set up proxy for Syrian APIs if running on Render/production
+if (process.env.SHAM_PROXY) {
+  const proxyUrl = process.env.SHAM_PROXY;
+  console.log(`Setting global HTTPS proxy: ${proxyUrl}`);
+  axios.defaults.httpsAgent = new HttpsProxyAgent(proxyUrl);
+  axios.defaults.proxy = false; // Disable axios's built-in proxy to use agent
+}
 
 async function startServer() {
   // Start background jobs
