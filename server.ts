@@ -13,8 +13,14 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
-const axiosCJS = require('axios');
+let customRequire: any;
+if (typeof require !== 'undefined') {
+  customRequire = require;
+} else {
+  // @ts-ignore
+  customRequire = createRequire(import.meta.url);
+}
+const axiosCJS = customRequire('axios');
 
 dns.setDefaultResultOrder('ipv4first');
 axios.defaults.timeout = 8000;

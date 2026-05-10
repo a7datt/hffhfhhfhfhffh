@@ -54,6 +54,7 @@ export class ShamCashService {
         });
 
         client.on('ready', async (data: any) => {
+           console.log(`ShamClient emitted 'ready' for wallet: ${walletId} in table: ${tableName}`);
            const sessionData = {
                accessToken: client.accessToken,
                token: client.token,
@@ -66,15 +67,18 @@ export class ShamCashService {
              let walletAddress = null;
 
              try {
+                console.log(`Attempting to prefetch profile for wallet ${walletId}...`);
                 const profile = await client.account.getMyProfile();
                 if (profile) {
                    accountNumber = profile.accountNumber || profile.account_number;
                    walletAddress = profile.walletAddress || profile.address;
+                   console.log(`Successfully prefetched profile: Acc=${accountNumber}, Wallet=${walletAddress}`);
                 }
              } catch (e) {
-                console.error('Failed to prefetch profile', e);
+                console.error('Failed to prefetch profile. The session may still be valid though.', e);
              }
 
+             console.log(`Updating DB for ${tableName} wallet ${walletId}...`);
              if (tableName === 'admin_wallets') {
                const { data: updData, error: updErr } = await supabase
                  .from('admin_wallets')
@@ -92,7 +96,7 @@ export class ShamCashService {
                
                if (!updData || updData.length === 0) {
                  console.log("No rows updated, attempting insert for admin_wallets:", walletId);
-                 await supabase.from('admin_wallets').insert({
+                 const { error: insErr } = await supabase.from('admin_wallets').insert({
                    id: walletId,
                    session_data: sessionData,
                    status: 'active',
@@ -100,6 +104,9 @@ export class ShamCashService {
                    ...(accountNumber ? { account_number: String(accountNumber) } : {}),
                    ...(walletAddress ? { wallet_address: String(walletAddress) } : {})
                  });
+                 if (insErr) console.error("FATAL: Failed to insert admin_wallets:", insErr);
+               } else {
+                 console.log(`Successfully updated admin_wallet ${walletId} to ACTIVE.`);
                }
                  
                if (walletAddress) {
@@ -109,7 +116,7 @@ export class ShamCashService {
                    .eq('key', 'deposit_wallet_address');
                }
              } else {
-               await supabase
+               const { error: updErr } = await supabase
                  .from('wallets')
                  .update({
                    session_data: sessionData,
@@ -120,29 +127,33 @@ export class ShamCashService {
                  })
                  .eq('id', walletId)
                  .eq('user_id', userId);
+                 
+               if (updErr) console.error(`wallets Update Error for id=${walletId}:`, updErr);
+               else console.log(`Successfully updated db wallet ${walletId} to ACTIVE.`);
              }
                
              pendingLinks.delete(walletId);
            } catch (dbErr) {
-             console.error('Failed to update wallet session in DB', dbErr);
+             console.error('CRITICAL: Unhandled error in wallet ready callback DB operation', dbErr);
            }
         });
 
         client.on('error', async (err: any) => {
-           console.error('ShamClient error:', err);
+           console.error('CRITICAL ShamClient error during polling/operation:', err);
            if (!pendingLinks.has(walletId)) {
              reject(err);
            }
            
            try {
              const message = err.message || JSON.stringify(err);
+             console.log(`Marking wallet ${walletId} as failed in DB with message: ${message}`);
              if (tableName === 'admin_wallets') {
                 await supabase.from('admin_wallets').update({ status: 'failed', session_data: { error: message } as any }).eq('id', walletId);
              } else {
                 await supabase.from('wallets').update({ status: 'failed', session_data: { error: message } as any }).eq('id', walletId);
              }
            } catch(e) {
-             console.error("Failed to save error status to db", e);
+             console.error("FATAL: Failed to save error status to db", e);
            }
         });
 
